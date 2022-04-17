@@ -1,4 +1,4 @@
-from urllib import response
+from datetime import datetime
 from pymongo import MongoClient
 from config import URL_MONGO
 
@@ -18,7 +18,8 @@ def register_url(url, token):
         document = {
             'url' : url,
             'token': token,
-            'viewers': 0 #TODO Implmentar posteriormente
+            'viewers': 0,
+            'timestamp-visits': []
         }
 
         collection.insert_one(document)
@@ -52,12 +53,15 @@ def go_to_the_page(token):
 
     try:
 
+        timestamp = get_timestamp()
+
         filter = {
             'token': token
             }
 
         update = {
-            '$inc' : { "viewers" : 1 }
+            '$inc' : { "viewers" : 1 },
+            '$push': {'timestamp-visits': timestamp}
             }
 
         search = collection.find_one_and_update(filter, update)
@@ -69,7 +73,7 @@ def go_to_the_page(token):
         else:
             url = f'http://{url}'
 
-        return f'<meta http-equiv="refresh" content="5; url={url}">'
+        return f'<head><meta http-equiv="refresh" content="5; url={url}"></head>'
 
     except:
         print('Error check token in database')
@@ -112,3 +116,10 @@ def delete_url_database(token):
 
     except:
         print('Error delete document in database')
+
+def get_timestamp():
+
+    now = datetime.now()
+    timestamp = datetime.timestamp(now)
+
+    return timestamp
